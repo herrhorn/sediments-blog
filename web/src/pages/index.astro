@@ -1,0 +1,98 @@
+---
+import { getAllPosts, imageUrl } from '../lib/sanity';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+const posts = await getAllPosts();
+const [featured, ...rest] = posts;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <style>
+      main { width: 960px; }
+      .post-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .post-list li { width: calc(50% - 1rem); }
+      .post-list li:first-child {
+        width: 100%;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+      .post-list li:first-child img { width: 100%; }
+      .post-list li:first-child .title { font-size: 2.369rem; }
+      .post-list a { display: block; text-decoration: none; transition: 0.2s ease; }
+      .post-list img { margin-bottom: 0.5rem; border-radius: 12px; }
+      .title { margin: 0; color: rgb(var(--black)); line-height: 1; }
+      .date { margin: 0; color: rgb(var(--gray)); }
+      .post-list a:hover .title,
+      .post-list a:hover .date { color: rgb(var(--accent)); }
+      .empty { color: rgb(var(--gray)); font-style: italic; }
+      @media (max-width: 720px) {
+        .post-list { gap: 0.5em; }
+        .post-list li { width: 100%; text-align: center; }
+        .post-list li:first-child { margin-bottom: 0; }
+        .post-list li:first-child .title { font-size: 1.563em; }
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      {posts.length === 0 ? (
+        <p class="empty">No posts yet. Write your first one in Sanity Studio!</p>
+      ) : (
+        <ul class="post-list">
+          {featured && (
+            <li>
+              <a href={`/blog/${featured.slug.current}/`}>
+                {featured.coverImageUrl && (
+                  <img
+                    src={imageUrl(featured.coverImageUrl, 1200, 600)}
+                    alt={featured.title}
+                    width={1200}
+                    height={600}
+                  />
+                )}
+                <h4 class="title">{featured.title}</h4>
+                {featured.publishedAt && (
+                  <p class="date"><FormattedDate date={new Date(featured.publishedAt)} /></p>
+                )}
+              </a>
+            </li>
+          )}
+          {rest.map((post) => (
+            <li>
+              <a href={`/blog/${post.slug.current}/`}>
+                {post.coverImageUrl && (
+                  <img
+                    src={imageUrl(post.coverImageUrl, 720, 360)}
+                    alt={post.title}
+                    width={720}
+                    height={360}
+                  />
+                )}
+                <h4 class="title">{post.title}</h4>
+                {post.publishedAt && (
+                  <p class="date"><FormattedDate date={new Date(post.publishedAt)} /></p>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+    <Footer />
+  </body>
+</html>
