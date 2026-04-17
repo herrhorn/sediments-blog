@@ -1,10 +1,9 @@
 ---
-import { getAllSlugs, getPost, imageUrl } from '../../lib/sanity';
+import { getAllSlugs, getPost } from '../../lib/sanity';
 import { portableTextToHtml } from '../../lib/portableText';
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
 
 export async function getStaticPaths() {
   const slugs = await getAllSlugs();
@@ -13,7 +12,6 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 const post = await getPost(slug!);
-
 if (!post) return Astro.redirect('/blog');
 
 const bodyHtml = post.body ? portableTextToHtml(post.body) : '';
@@ -22,80 +20,108 @@ const bodyHtml = post.body ? portableTextToHtml(post.body) : '';
 <html lang="en">
   <head>
     <BaseHead title={post.title} description={post.excerpt ?? ''} />
-    <style>
-      main {
-        width: calc(100% - 2em);
-        max-width: 100%;
-        margin: 0;
-      }
-      .hero-image { width: 100%; }
-      .hero-image img {
-        display: block;
-        margin: 0 auto;
-        border-radius: 12px;
-        box-shadow: var(--box-shadow);
-      }
-      .prose {
-        width: 720px;
-        max-width: calc(100% - 2em);
-        margin: auto;
-        padding: 1em;
-        color: rgb(var(--gray-dark));
-      }
-      .title {
-        margin-bottom: 1em;
-        padding: 1em 0;
-        text-align: center;
-        line-height: 1;
-      }
-      .title h1 { margin: 0 0 0.5em 0; }
-      .date { margin-bottom: 0.5em; color: rgb(var(--gray)); }
-      .author { font-size: 0.9em; color: rgb(var(--gray)); margin-top: 0.25em; }
-      .prose :global(img) { max-width: 100%; border-radius: 8px; }
-      .prose :global(figure) { margin: 1.5em 0; }
-      .prose :global(figcaption) { text-align: center; font-size: 0.85em; color: rgb(var(--gray)); margin-top: 0.5em; }
-      .prose :global(blockquote) {
-        border-left: 4px solid rgb(var(--accent));
-        margin-left: 0;
-        padding-left: 1em;
-        color: rgb(var(--gray));
-        font-style: italic;
-      }
-      .prose :global(code) {
-        background: rgb(var(--gray-light));
-        padding: 0.1em 0.3em;
-        border-radius: 3px;
-        font-size: 0.9em;
-      }
-    </style>
   </head>
   <body>
     <Header />
     <main>
       <article>
-        {post.coverImageUrl && (
-          <div class="hero-image">
-            <img
-              src={imageUrl(post.coverImageUrl, 1200, 600)}
-              alt={post.title}
-              width={1200}
-              height={600}
-            />
+        <header class="post-header">
+          <h1>{post.title}</h1>
+          <div class="meta">
+            {post.publishedAt && (
+              <time datetime={post.publishedAt}>
+                {new Date(post.publishedAt).toLocaleDateString('en-us', {
+                  year: 'numeric', month: 'long', day: 'numeric'
+                })}
+              </time>
+            )}
+            {post.author?.name && <span class="author">{post.author.name}</span>}
           </div>
-        )}
-        <div class="prose">
-          <div class="title">
-            <div class="date">
-              {post.publishedAt && <FormattedDate date={new Date(post.publishedAt)} />}
-            </div>
-            <h1>{post.title}</h1>
-            {post.author?.name && <p class="author">by {post.author.name}</p>}
-            <hr />
-          </div>
-          <div set:html={bodyHtml} />
-        </div>
+        </header>
+
+        <hr />
+
+        <div class="prose" set:html={bodyHtml} />
       </article>
+
+      <nav class="post-nav">
+        <a href="/blog">&larr; all posts</a>
+      </nav>
     </main>
     <Footer />
   </body>
 </html>
+
+<style>
+  .post-header {
+    margin-bottom: 1.5em;
+  }
+
+  .post-header h1 {
+    font-size:    1.3em;
+    margin:       0 0 0.4em;
+  }
+
+  .meta {
+    display:    flex;
+    gap:        1.5em;
+    color:      var(--muted);
+    font-size:  0.8em;
+  }
+
+  .author::before {
+    content: '— ';
+  }
+
+  /* ── Prose ── */
+
+  .prose {
+    margin-top: 2em;
+  }
+
+  .prose :global(h2),
+  .prose :global(h3),
+  .prose :global(h4) {
+    margin-top: 2em;
+  }
+
+  .prose :global(p) {
+    margin: 0 0 1.5em;
+  }
+
+  .prose :global(a) {
+    color: var(--text);
+  }
+
+  .prose :global(img) {
+    max-width:    100%;
+    margin:       1.5em 0;
+    border-radius: 3px;
+  }
+
+  .prose :global(figure) {
+    margin: 1.5em 0;
+  }
+
+  .prose :global(figcaption) {
+    color:      var(--muted);
+    font-size:  0.8em;
+    margin-top: 0.5em;
+  }
+
+  /* ── Back link ── */
+
+  .post-nav {
+    margin-top: 3em;
+  }
+
+  .post-nav a {
+    font-size:        0.85em;
+    color:            var(--muted);
+    text-decoration:  none;
+  }
+
+  .post-nav a:hover {
+    color: var(--text);
+  }
+</style>
